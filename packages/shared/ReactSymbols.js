@@ -33,6 +33,7 @@ export let REACT_OPAQUE_ID_TYPE = 0xeae0;
 export let REACT_DEBUG_TRACING_MODE_TYPE = 0xeae1;
 export let REACT_OFFSCREEN_TYPE = 0xeae2;
 export let REACT_LEGACY_HIDDEN_TYPE = 0xeae3;
+export let REACT_INJECTION_PROVIDER_TYPE = 0xeae4;
 
 if (typeof Symbol === 'function' && Symbol.for) {
   const symbolFor = Symbol.for;
@@ -56,6 +57,7 @@ if (typeof Symbol === 'function' && Symbol.for) {
   REACT_DEBUG_TRACING_MODE_TYPE = symbolFor('react.debug_trace_mode');
   REACT_OFFSCREEN_TYPE = symbolFor('react.offscreen');
   REACT_LEGACY_HIDDEN_TYPE = symbolFor('react.legacy_hidden');
+  REACT_INJECTION_PROVIDER_TYPE = symbolFor('react.injection_provider');
 }
 
 const MAYBE_ITERATOR_SYMBOL = typeof Symbol === 'function' && Symbol.iterator;

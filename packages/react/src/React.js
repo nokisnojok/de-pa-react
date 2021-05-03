@@ -17,9 +17,11 @@ import {
   REACT_SUSPENSE_LIST_TYPE,
   REACT_LEGACY_HIDDEN_TYPE,
   REACT_SCOPE_TYPE,
+  REACT_INJECTION_PROVIDER_TYPE
 } from 'shared/ReactSymbols';
 
 import {Component, PureComponent} from './ReactBaseClasses';
+import {IComponent} from './injector'
 import {createRef} from './ReactCreateRef';
 import {forEach, map, count, toArray, only} from './ReactChildren';
 import {
@@ -78,6 +80,7 @@ export {
   createRef,
   Component,
   PureComponent,
+  IComponent,
   createContext,
   forwardRef,
   lazy,
@@ -98,6 +101,7 @@ export {
   REACT_STRICT_MODE_TYPE as StrictMode,
   REACT_DEBUG_TRACING_MODE_TYPE as unstable_DebugTracingMode,
   REACT_SUSPENSE_TYPE as Suspense,
+  REACT_INJECTION_PROVIDER_TYPE as InjectionProvider,
   createElement,
   cloneElement,
   isValidElement,

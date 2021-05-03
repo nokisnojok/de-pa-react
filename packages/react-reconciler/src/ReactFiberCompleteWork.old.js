@@ -57,6 +57,7 @@ import {
   Block,
   OffscreenComponent,
   LegacyHiddenComponent,
+  InjectionProvider,
 } from './ReactWorkTags';
 import {NoMode, BlockingMode, ProfileMode} from './ReactTypeOfMode';
 import {Ref, Update, NoFlags, DidCapture, Snapshot} from './ReactFiberFlags';
@@ -656,6 +657,7 @@ function completeWork(
     case FunctionComponent:
     case ForwardRef:
     case Fragment:
+    case InjectionProvider:
     case Mode:
     case Profiler:
     case ContextConsumer:

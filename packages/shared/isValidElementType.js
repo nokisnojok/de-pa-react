@@ -24,6 +24,7 @@ import {
   REACT_BLOCK_TYPE,
   REACT_SERVER_BLOCK_TYPE,
   REACT_LEGACY_HIDDEN_TYPE,
+  REACT_INJECTION_PROVIDER_TYPE
 } from 'shared/ReactSymbols';
 import {enableScopeAPI} from './ReactFeatureFlags';
 
@@ -41,6 +42,7 @@ export default function isValidElementType(type: mixed) {
     type === REACT_SUSPENSE_TYPE ||
     type === REACT_SUSPENSE_LIST_TYPE ||
     type === REACT_LEGACY_HIDDEN_TYPE ||
+    type === REACT_INJECTION_PROVIDER_TYPE ||
     (enableScopeAPI && type === REACT_SCOPE_TYPE)
   ) {
     return true;
