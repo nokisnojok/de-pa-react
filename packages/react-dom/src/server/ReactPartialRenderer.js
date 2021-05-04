@@ -42,6 +42,7 @@ import {
   REACT_FUNDAMENTAL_TYPE,
   REACT_SCOPE_TYPE,
   REACT_LEGACY_HIDDEN_TYPE,
+  REACT_INJECTION_PROVIDER_TYPE,
 } from 'shared/ReactSymbols';
 
 import {
@@ -79,6 +80,7 @@ import warnValidStyle from '../shared/warnValidStyle';
 import {validateProperties as validateARIAProperties} from '../shared/ReactDOMInvalidARIAHook';
 import {validateProperties as validateInputProperties} from '../shared/ReactDOMNullInputValuePropHook';
 import {validateProperties as validateUnknownProperties} from '../shared/ReactDOMUnknownPropertyHook';
+import {createInjector, instantiate} from './injector';
 
 export type ServerOptions = {
   identifierPrefix?: string,
@@ -303,7 +305,10 @@ function flattenTopLevelChildren(children: mixed): FlatReactChildren {
     return toArray(children);
   }
   const element = ((children: any): ReactElement);
-  if (element.type !== REACT_FRAGMENT_TYPE) {
+  if (
+    element.type !== REACT_FRAGMENT_TYPE ||
+    element.type !== REACT_INJECTION_PROVIDER_TYPE
+  ) {
     return [element];
   }
   const fragmentChildren = element.props.children;
@@ -419,6 +424,8 @@ function resolve(
   child: mixed,
   context: Object,
 |} {
+  const self = this;
+  const insts = [];
   while (React.isValidElement(child)) {
     // Safe because we just checked it's an element.
     const element: ReactElement = (child: any);
@@ -429,7 +436,10 @@ function resolve(
     if (typeof Component !== 'function') {
       break;
     }
-    processChild(element, Component);
+    const inst = processChild(element, Component);
+    if (!!inst) {
+      insts.push(inst);
+    }
   }
 
   // Extra closure so queue and replace can be captured properly
@@ -464,7 +474,8 @@ function resolve(
 
     let inst;
     if (isClass) {
-      inst = new Component(element.props, publicContext, updater);
+      inst = self.instantiate(Component, element.props, publicContext, updater);
+      self.pushClassComponentInstance(inst);
 
       if (typeof Component.getDerivedStateFromProps === 'function') {
         if (__DEV__) {
@@ -698,8 +709,11 @@ function resolve(
         context = Object.assign({}, context, childContext);
       }
     }
+    if (isClass) {
+      return inst;
+    }
   }
-  return {child, context};
+  return {child, context, insts};
 }
 
 type Frame = {
@@ -710,6 +724,7 @@ type Frame = {
   childIndex: number,
   context: Object,
   footer: string,
+  insts: Array<any>,
   ...
 };
 
@@ -761,6 +776,12 @@ class ReactDOMServerRenderer {
     this.makeStaticMarkup = makeStaticMarkup;
     this.suspenseDepth = 0;
 
+    // injector
+    this.injector = null;
+
+    // classComponentInstance
+    this.insts = [];
+
     // Context (new API)
     this.contextIndex = -1;
     this.contextStack = [];
@@ -781,6 +802,31 @@ class ReactDOMServerRenderer {
       this.clearProviders();
       freeThreadID(this.threadID);
     }
+  }
+
+  instantiate(ctor, props, context) {
+    const pInjector = this.injector;
+    const pInst = this.insts[this.insts.length - 1];
+    return instantiate(ctor, props, context, pInjector, pInst);
+  }
+
+  pushClassComponentInstance(inst) {
+    this.insts.push(inst);
+  }
+
+  popClassComponentInstance(insts) {
+    for (let i = insts.length; i > 0; i--) {
+      this.insts.pop();
+    }
+  }
+
+  pushInjectorProvider(props) {
+    const {providers} = props;
+    this.injector = createInjector(providers, this.injector);
+  }
+
+  popInjectorProvider() {
+    this.injector = this.injector && this.injector._parent;
   }
 
   /**
@@ -854,6 +900,7 @@ class ReactDOMServerRenderer {
     }
 
     const prevPartialRenderer = currentPartialRenderer;
+    let popStack;
     setCurrentPartialRenderer(this);
     const prevDispatcher = ReactCurrentDispatcher.current;
     ReactCurrentDispatcher.current = Dispatcher;
@@ -874,7 +921,13 @@ class ReactDOMServerRenderer {
           if (footer !== '') {
             this.previousWasTextNode = false;
           }
-          this.stack.pop();
+          popStack = this.stack.pop();
+          if (popStack.insts && popStack.insts.length > 0) {
+            const index = this.stack.findIndex(
+              item => item.insts === popStack.insts,
+            );
+            this.popClassComponentInstance(popStack.insts);
+          }
           if (frame.type === 'select') {
             this.currentSelectValue = null;
           } else if (
@@ -884,6 +937,8 @@ class ReactDOMServerRenderer {
           ) {
             const provider: ReactProvider<any> = (frame.type: any);
             this.popProvider(provider);
+          } else if (frame.type === REACT_INJECTION_PROVIDER_TYPE) {
+            this.popInjectorProvider();
           } else if (frame.type === REACT_SUSPENSE_TYPE) {
             this.suspenseDepth--;
             const buffered = out.pop();
@@ -976,7 +1031,13 @@ class ReactDOMServerRenderer {
       return escapeTextForBrowser(text);
     } else {
       let nextChild;
-      ({child: nextChild, context} = resolve(child, context, this.threadID));
+      let insts;
+      ({child: nextChild, context, insts} = resolve.call(
+        this,
+        child,
+        context,
+        this.threadID,
+      ));
       if (nextChild === null || nextChild === false) {
         return '';
       } else if (!React.isValidElement(nextChild)) {
@@ -1004,6 +1065,7 @@ class ReactDOMServerRenderer {
           childIndex: 0,
           context: context,
           footer: '',
+          insts,
         };
         if (__DEV__) {
           ((frame: any): FrameDev).debugElementStack = [];
@@ -1016,7 +1078,7 @@ class ReactDOMServerRenderer {
       const elementType = nextElement.type;
 
       if (typeof elementType === 'string') {
-        return this.renderDOM(nextElement, context, parentNamespace);
+        return this.renderDOM(nextElement, context, parentNamespace, insts);
       }
 
       switch (elementType) {
@@ -1043,6 +1105,27 @@ class ReactDOMServerRenderer {
             childIndex: 0,
             context: context,
             footer: '',
+            insts,
+          };
+          if (__DEV__) {
+            ((frame: any): FrameDev).debugElementStack = [];
+          }
+          this.stack.push(frame);
+          return '';
+        }
+        case REACT_INJECTION_PROVIDER_TYPE: {
+          this.pushInjectorProvider(nextChild.props);
+          const nextChildren = toArray(
+            ((nextChild: any): ReactElement).props.children,
+          );
+          const frame: Frame = {
+            type: REACT_INJECTION_PROVIDER_TYPE,
+            domNamespace: parentNamespace,
+            children: nextChildren,
+            childIndex: 0,
+            context: context,
+            footer: '',
+            insts,
           };
           if (__DEV__) {
             ((frame: any): FrameDev).debugElementStack = [];
@@ -1065,6 +1148,7 @@ class ReactDOMServerRenderer {
                 childIndex: 0,
                 context: context,
                 footer: '',
+                insts,
               };
               if (__DEV__) {
                 ((frame: any): FrameDev).debugElementStack = [];
@@ -1083,6 +1167,7 @@ class ReactDOMServerRenderer {
               childIndex: 0,
               context: context,
               footer: '<!--/$-->',
+              insts,
             };
             const frame: Frame = {
               fallbackFrame,
@@ -1092,6 +1177,7 @@ class ReactDOMServerRenderer {
               childIndex: 0,
               context: context,
               footer: '<!--/$-->',
+              insts,
             };
             if (__DEV__) {
               ((frame: any): FrameDev).debugElementStack = [];
@@ -1117,6 +1203,7 @@ class ReactDOMServerRenderer {
               childIndex: 0,
               context: context,
               footer: '',
+              insts,
             };
             if (__DEV__) {
               ((frame: any): FrameDev).debugElementStack = [];
@@ -1155,6 +1242,7 @@ class ReactDOMServerRenderer {
               childIndex: 0,
               context: context,
               footer: '',
+              insts,
             };
             if (__DEV__) {
               ((frame: any): FrameDev).debugElementStack = [];
@@ -1177,6 +1265,7 @@ class ReactDOMServerRenderer {
               childIndex: 0,
               context: context,
               footer: '',
+              insts,
             };
             if (__DEV__) {
               ((frame: any): FrameDev).debugElementStack = [];
@@ -1195,6 +1284,7 @@ class ReactDOMServerRenderer {
               childIndex: 0,
               context: context,
               footer: '',
+              insts,
             };
             if (__DEV__) {
               ((frame: any): FrameDev).debugElementStack = [];
@@ -1245,6 +1335,7 @@ class ReactDOMServerRenderer {
               childIndex: 0,
               context: context,
               footer: '',
+              insts,
             };
             if (__DEV__) {
               ((frame: any): FrameDev).debugElementStack = [];
@@ -1277,6 +1368,7 @@ class ReactDOMServerRenderer {
                 childIndex: 0,
                 context: context,
                 footer: close,
+                insts,
               };
               if (__DEV__) {
                 ((frame: any): FrameDev).debugElementStack = [];
@@ -1313,6 +1405,7 @@ class ReactDOMServerRenderer {
               childIndex: 0,
               context: context,
               footer: '',
+              insts,
             };
             if (__DEV__) {
               ((frame: any): FrameDev).debugElementStack = [];
@@ -1357,6 +1450,7 @@ class ReactDOMServerRenderer {
     element: ReactElement,
     context: Object,
     parentNamespace: string,
+    insts,
   ): string {
     const tag = element.type.toLowerCase();
 
@@ -1625,6 +1719,7 @@ class ReactDOMServerRenderer {
       childIndex: 0,
       context: context,
       footer: footer,
+      insts,
     };
     if (__DEV__) {
       ((frame: any): FrameDev).debugElementStack = [];
