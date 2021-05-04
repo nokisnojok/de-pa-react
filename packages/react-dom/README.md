@@ -1,11 +1,11 @@
-# `react-dom`
+# `@de-pa/react-dom`
 
-This package serves as the entry point to the DOM and server renderers for React. It is intended to be paired with the generic React package, which is shipped as `react` to npm.
+This package serves as the entry point to the DOM for @de-pa/React. It is intended to be paired with the generic React package, which is shipped as `@de-pa/react` to npm. based on `react-dom` and add dependency injection pattern.
 
 ## Installation
 
 ```sh
-npm install react react-dom
+npm install @de-pa/react @de-pa/react-dom injection-js
 ```
 
 ## Usage
@@ -13,42 +13,31 @@ npm install react react-dom
 ### In the browser
 
 ```js
-var React = require('react');
-var ReactDOM = require('react-dom');
+import { Component, IComponent, InjectionProvider } from '@de-pa/react';
+import { render } from '@de-pa/react-dom';
 
-class MyComponent extends React.Component {
-  render() {
-    return <div>Hello World</div>;
-  }
+class Service {
+    method() {
+        return 'hello world';
+    }
 }
 
-ReactDOM.render(<MyComponent />, node);
-```
-
-### On the server
-
-```js
-var React = require('react');
-var ReactDOMServer = require('react-dom/server');
-
-class MyComponent extends React.Component {
-  render() {
-    return <div>Hello World</div>;
-  }
+@IComponent()
+class App extends Component {
+    constructor(public service: Service) {
+        super()
+    }
+    render() {
+        return <div>{this.service.method()}</div>
+    }
 }
 
-ReactDOMServer.renderToString(<MyComponent />);
+render(<InjectionProvider providers={[Service]}><App /></InjectionProvider>,document.body)
 ```
-
 ## API
 
-### `react-dom`
+### `@de-pa/react-dom`
 
 - `findDOMNode`
 - `render`
 - `unmountComponentAtNode`
-
-### `react-dom/server`
-
-- `renderToString`
-- `renderToStaticMarkup`

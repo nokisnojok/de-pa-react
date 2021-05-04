@@ -1,13 +1,33 @@
-# `react`
+# `@de-pa/react`
 
-React is a JavaScript library for creating user interfaces.
+`@de-pa/React` is a JavaScript library besed on `react`.Add a dependency injection pattern.
 
-The `react` package contains only the functionality necessary to define React components. It is typically used together with a React renderer like `react-dom` for the web, or `react-native` for the native environments.
+The `@de-pa/react` package contains only the functionality necessary to define React components. It is typically used together with a React renderer like `@de-pa/react-dom` for the web.
 
-**Note:** by default, React will be in development mode. The development version includes extra warnings about common mistakes, whereas the production version includes extra performance optimizations and strips all error messages. Don't forget to use the [production build](https://reactjs.org/docs/optimizing-performance.html#use-the-production-build) when deploying your application.
+**Note:** API is the same as react.
 
 ## Example Usage
 
 ```js
-var React = require('react');
+import { Component, IComponent, InjectionProvider } from '@de-pa/react';
+import { render } from '@de-pa/react-dom';
+
+class Service {
+    method() {
+        return 'hello world';
+    }
+}
+
+@IComponent()
+class App extends Component {
+    constructor(public service: Service) {
+        super()
+    }
+    render() {
+        return <div>{this.service.method()}</div>
+    }
+}
+
+render(<InjectionProvider providers={[Service]}><App /></InjectionProvider>,document.body)
+
 ```

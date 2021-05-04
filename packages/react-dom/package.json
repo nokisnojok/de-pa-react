@@ -1,11 +1,11 @@
 {
-  "name": "react-dom",
+  "name": "@de-pa/react-dom",
   "version": "17.0.0",
   "description": "React package for working with the DOM.",
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/facebook/react.git",
+    "url": "https://github.com/nokisnojok/react.git",
     "directory": "packages/react-dom"
   },
   "keywords": [
@@ -13,7 +13,7 @@
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/facebook/react/issues"
+    "url": "https://github.com/nokisnojok/react/issues"
   },
   "homepage": "https://reactjs.org/",
   "dependencies": {
@@ -22,6 +22,8 @@
     "scheduler": "^0.20.0"
   },
   "peerDependencies": {
+    "reflect-metadata": ">=0.1.13",
+    "injection-js": ">=2.4.0",
     "react": "17.0.0"
   },
   "files": [

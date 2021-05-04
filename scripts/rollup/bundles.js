@@ -706,6 +706,55 @@ const bundles = [
   },
 ];
 
+const globalPeerDeps = ['injection-js', 'reflect-metadata'];
+
+bundles.forEach(bundle => {
+  globalPeerDeps.forEach(dep => {
+    bundle.externals.push(dep);
+  });
+});
+
+// let reactDomServerNodeConfig;
+
+let configs = [];
+
+const supTypes = {
+  NODE_ES2015: 'NODE_ES2015',
+  UMD_DEV: 'UMD_DEV',
+  UMD_PROD: 'UMD_PROD',
+  UMD_PROFILING: 'UMD_PROFILING',
+  NODE_DEV: 'NODE_DEV',
+  NODE_PROD: 'NODE_PROD',
+  NODE_PROFILING: 'NODE_PROFILING',
+};
+
+bundles.forEach(item => {
+  item.bundleTypes = item.bundleTypes.filter(item => {
+    return !!supTypes[item]
+  })
+  if (item.entry === 'react') {
+    configs.push(item);
+    return;
+  }
+  if (item.entry.startsWith('react/')) {
+    configs.push(item);
+    return;
+  }
+  if (item.entry === 'react-dom') {
+    configs.push(item);
+    return;
+  }
+  if (item.entry.startsWith('react-dom/')) {
+    configs.push(item);
+    return;
+  }
+});
+
+bundles.length = 0;
+configs.forEach(item => {
+  bundles.push(item);
+});
+
 // Based on deep-freeze by substack (public domain)
 function deepFreeze(o) {
   Object.freeze(o);
