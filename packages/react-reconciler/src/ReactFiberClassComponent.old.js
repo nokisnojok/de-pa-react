@@ -64,6 +64,8 @@ import {
   markStateUpdateScheduled,
 } from './SchedulingProfiler';
 
+import {instantiate} from './instantiate';
+
 const fakeInternalInstance = {};
 const isArray = Array.isArray;
 
@@ -649,7 +651,8 @@ function constructClassInstance(
     }
   }
 
-  const instance = new ctor(props, context);
+  const instance = instantiate(ctor, props, context, workInProgress);
+  // const instance = new ctor(props, context);
   const state = (workInProgress.memoizedState =
     instance.state !== null && instance.state !== undefined
       ? instance.state

@@ -56,6 +56,7 @@ import {
   Block,
   OffscreenComponent,
   LegacyHiddenComponent,
+  InjectionProvider
 } from './ReactWorkTags';
 import getComponentName from 'shared/getComponentName';
 
@@ -91,6 +92,7 @@ import {
   REACT_BLOCK_TYPE,
   REACT_OFFSCREEN_TYPE,
   REACT_LEGACY_HIDDEN_TYPE,
+  REACT_INJECTION_PROVIDER_TYPE,
 } from 'shared/ReactSymbols';
 
 export type {Fiber};
@@ -125,6 +127,9 @@ function FiberNode(
   this.elementType = null;
   this.type = null;
   this.stateNode = null;
+
+  //  injector
+  this.injector = null;
 
   // Fiber
   this.return = null;
@@ -268,6 +273,7 @@ export function createWorkInProgress(current: Fiber, pendingProps: any): Fiber {
     workInProgress.elementType = current.elementType;
     workInProgress.type = current.type;
     workInProgress.stateNode = current.stateNode;
+    workInProgress.injector = current.injector;
 
     if (__DEV__) {
       // DEV-only fields
@@ -484,6 +490,9 @@ export function createFiberFromTypeAndProps(
         fiberTag = Mode;
         mode |= StrictMode;
         break;
+      case REACT_INJECTION_PROVIDER_TYPE:
+        fiberTag = InjectionProvider;
+        break;
       case REACT_PROFILER_TYPE:
         return createFiberFromProfiler(pendingProps, mode, lanes, key);
       case REACT_SUSPENSE_TYPE:
@@ -615,6 +624,18 @@ export function createFiberFromFragment(
 ): Fiber {
   const fiber = createFiber(Fragment, elements, key, mode);
   fiber.lanes = lanes;
+  return fiber;
+}
+
+export function createFiberFromInjectionProvider(
+  pendingProps: any,
+  mode: TypeOfMode,
+  lanes: Lanes,
+  key: null | string,
+) {
+  const fiber = createFiber(InjectionProvider, pendingProps.children, key, mode);
+  fiber.lanes = lanes;
+  fiber.providers = pendingProps.providers;
   return fiber;
 }
 

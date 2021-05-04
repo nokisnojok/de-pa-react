@@ -52,6 +52,7 @@ import {
   Block,
   OffscreenComponent,
   LegacyHiddenComponent,
+  InjectionProvider,
 } from './ReactWorkTags';
 import {
   NoFlags,
@@ -204,6 +205,8 @@ import {unstable_wrap as Schedule_tracing_wrap} from 'scheduler/tracing';
 import {setWorkInProgressVersion} from './ReactMutableSource.new';
 
 import {disableLogs, reenableLogs} from 'shared/ConsolePatchingDev';
+
+import {createInjectorProvider} from './instantiate';
 
 const ReactCurrentOwner = ReactSharedInternals.ReactCurrentOwner;
 
@@ -654,6 +657,21 @@ function updateFragment(
   renderLanes: Lanes,
 ) {
   const nextChildren = workInProgress.pendingProps;
+  reconcileChildren(current, workInProgress, nextChildren, renderLanes);
+  return workInProgress.child;
+}
+
+function updateInjectionProvider(
+  current: Fiber | null,
+  workInProgress: Fiber,
+  renderLanes: Lanes,
+) {
+  if (!current) {
+    workInProgress.injector = createInjectorProvider(workInProgress);
+  } else {
+    workInProgress.injector = current.injector;
+  }
+  const nextChildren = workInProgress.pendingProps.children;
   reconcileChildren(current, workInProgress, nextChildren, renderLanes);
   return workInProgress.child;
 }
@@ -3378,6 +3396,8 @@ function beginWork(
     }
     case Fragment:
       return updateFragment(current, workInProgress, renderLanes);
+    case InjectionProvider:
+      return updateInjectionProvider(current, workInProgress, renderLanes);
     case Mode:
       return updateMode(current, workInProgress, renderLanes);
     case Profiler:
