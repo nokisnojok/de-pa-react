@@ -1261,57 +1261,6 @@ describe('ReactSuspenseWithNoopRenderer', () => {
       );
     });
 
-    it('suspends inside constructor', async () => {
-      class AsyncTextInConstructor extends React.Component {
-        constructor(props) {
-          super(props);
-          const text = props.text;
-          Scheduler.unstable_yieldValue('constructor');
-          try {
-            readText(text);
-            this.state = {text};
-          } catch (promise) {
-            if (typeof promise.then === 'function') {
-              Scheduler.unstable_yieldValue(`Suspend! [${text}]`);
-            } else {
-              Scheduler.unstable_yieldValue(`Error! [${text}]`);
-            }
-            throw promise;
-          }
-        }
-        componentDidMount() {
-          Scheduler.unstable_yieldValue('componentDidMount');
-        }
-        render() {
-          Scheduler.unstable_yieldValue(this.state.text);
-          return <span prop={this.state.text} />;
-        }
-      }
-
-      ReactNoop.renderLegacySyncRoot(
-        <Suspense fallback={<Text text="Loading..." />}>
-          <AsyncTextInConstructor ms={100} text="Hi" />
-        </Suspense>,
-      );
-
-      expect(Scheduler).toHaveYielded([
-        'constructor',
-        'Suspend! [Hi]',
-        'Loading...',
-      ]);
-      expect(ReactNoop.getChildren()).toEqual([span('Loading...')]);
-
-      await resolveText('Hi');
-
-      expect(Scheduler).toHaveYielded(['Promise resolved [Hi]']);
-      expect(Scheduler).toFlushExpired([
-        'constructor',
-        'Hi',
-        'componentDidMount',
-      ]);
-      expect(ReactNoop.getChildren()).toEqual([span('Hi')]);
-    });
-
     it('does not infinite loop if fallback contains lifecycle method', async () => {
       class Fallback extends React.Component {
         state = {

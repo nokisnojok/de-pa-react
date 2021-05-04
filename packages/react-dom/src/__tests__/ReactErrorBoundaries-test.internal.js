@@ -843,31 +843,6 @@ describe('ReactErrorBoundaries', () => {
     expect(Scheduler).toHaveYielded(['ErrorBoundary componentWillUnmount']);
   });
 
-  it('renders an error state if child throws in constructor', () => {
-    const container = document.createElement('div');
-    ReactDOM.render(
-      <ErrorBoundary>
-        <BrokenConstructor />
-      </ErrorBoundary>,
-      container,
-    );
-    expect(container.firstChild.textContent).toBe('Caught an error: Hello.');
-    expect(Scheduler).toHaveYielded([
-      'ErrorBoundary constructor',
-      'ErrorBoundary componentWillMount',
-      'ErrorBoundary render success',
-      'BrokenConstructor constructor [!]',
-      // Catch and render an error message
-      'ErrorBoundary static getDerivedStateFromError',
-      'ErrorBoundary componentWillMount',
-      'ErrorBoundary render error',
-      'ErrorBoundary componentDidMount',
-    ]);
-
-    ReactDOM.unmountComponentAtNode(container);
-    expect(Scheduler).toHaveYielded(['ErrorBoundary componentWillUnmount']);
-  });
-
   it('renders an error state if child throws in componentWillMount', () => {
     const container = document.createElement('div');
     ReactDOM.render(
@@ -1221,50 +1196,6 @@ describe('ReactErrorBoundaries', () => {
       'ErrorBoundary componentWillMount',
       'ErrorBoundary render success',
       'ErrorBoundary componentDidMount',
-    ]);
-
-    ReactDOM.unmountComponentAtNode(container);
-    expect(Scheduler).toHaveYielded(['ErrorBoundary componentWillUnmount']);
-  });
-
-  it('catches if child throws in constructor during update', () => {
-    const container = document.createElement('div');
-    ReactDOM.render(
-      <ErrorBoundary>
-        <Normal />
-      </ErrorBoundary>,
-      container,
-    );
-    Scheduler.unstable_clearYields();
-    ReactDOM.render(
-      <ErrorBoundary>
-        <Normal />
-        <Normal logName="Normal2" />
-        <BrokenConstructor />
-      </ErrorBoundary>,
-      container,
-    );
-    expect(container.textContent).toBe('Caught an error: Hello.');
-    expect(Scheduler).toHaveYielded([
-      'ErrorBoundary componentWillReceiveProps',
-      'ErrorBoundary componentWillUpdate',
-      'ErrorBoundary render success',
-      'Normal componentWillReceiveProps',
-      'Normal componentWillUpdate',
-      'Normal render',
-      // Normal2 will attempt to mount:
-      'Normal2 constructor',
-      'Normal2 componentWillMount',
-      'Normal2 render',
-      // BrokenConstructor will abort rendering:
-      'BrokenConstructor constructor [!]',
-      // Handle the error
-      'ErrorBoundary static getDerivedStateFromError',
-      // Render the error message
-      'ErrorBoundary componentWillUpdate',
-      'ErrorBoundary render error',
-      'Normal componentWillUnmount',
-      'ErrorBoundary componentDidUpdate',
     ]);
 
     ReactDOM.unmountComponentAtNode(container);
