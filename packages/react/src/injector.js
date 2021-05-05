@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import {Inject} from 'injection-js';
 
 const ARROW_ARG = /^([^(]+?)=>/;

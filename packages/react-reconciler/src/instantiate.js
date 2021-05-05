@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import {ReflectiveInjector, Inject} from 'injection-js';
 import {ClassComponent, InjectionProvider} from './ReactWorkTags';
 
