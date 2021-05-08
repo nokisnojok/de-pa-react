@@ -15,7 +15,7 @@
   "bugs": {
     "url": "https://github.com/nokisnojok/react/issues"
   },
-  "homepage": "https://reactjs.org/",
+  "homepage": "https://github.com/nokisnojok/react",
   "dependencies": {
     "loose-envify": "^1.1.0",
     "object-assign": "^4.1.1",
