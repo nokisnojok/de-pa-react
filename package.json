@@ -64,6 +64,8 @@
     "glob-stream": "^6.1.0",
     "google-closure-compiler": "^20200517.0.0",
     "gzip-size": "^5.1.1",
+    "injection-js": "^2.4.0",
+    "reflect-metadata": "^0.1.13",
     "jasmine-check": "^1.0.0-rc.0",
     "jest": "^25.2.7",
     "jest-cli": "^25.2.7",
