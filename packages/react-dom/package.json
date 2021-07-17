@@ -1,5 +1,5 @@
 {
-  "name": "react-dom",
+  "name": "@de-pa/react-dom",
   "version": "17.0.0",
   "description": "React package for working with the DOM.",
   "main": "index.js",
