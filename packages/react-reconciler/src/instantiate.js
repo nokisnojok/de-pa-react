@@ -1,4 +1,4 @@
-import {ReflectiveInjector, Inject} from 'injection-js';
+import {ReflectiveInjector} from 'injection-js';
 import {ClassComponent, InjectionProvider} from './ReactWorkTags';
 
 function findInjectionProviderFibler(fiber) {
@@ -25,7 +25,7 @@ function findParentFiler(fiber) {
 
 export function createInjectorProvider(fiber) {
   const providers = fiber.pendingProps.providers || [];
-  const pFiber = findParentFiler(fiber);
+  const pFiber = findInjectionProviderFibler(fiber);
   const pInjector = pFiber ? pFiber.injector : undefined;
   return createInjector(providers, pInjector);
 }
