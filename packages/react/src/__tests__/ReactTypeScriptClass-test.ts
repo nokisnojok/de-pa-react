@@ -1,6 +1,4 @@
 /// <reference path="./testDefinitions/PropTypes.d.ts" />
-/// <reference path="./testDefinitions/React.d.ts" />
-/// <reference path="./testDefinitions/ReactDOM.d.ts" />
 
 /*!
  * Copyright (c) Facebook, Inc. and its affiliates.
